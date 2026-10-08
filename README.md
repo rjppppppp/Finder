@@ -36,7 +36,7 @@
 ---
 
 <p align="center">
-  <img src="assets/preview.png" width="92%" alt="Finder Spotlight Preview on Windows 11" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
+  <img src="assets/finder_windows11_preview.png" width="94%" alt="Finder Spotlight Preview on Windows 11 Desktop" style="border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);" />
 </p>
 
 ---
