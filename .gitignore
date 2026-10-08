@@ -1,0 +1,24 @@
+# Build and Output Folders
+bin/
+obj/
+PublishOutput/
+Portable/
+
+# Binary Releases & Payloads
+*.exe
+*.gz
+*.zip
+*.dll
+*.pdb
+
+# IDE, Visual Studio, and System Files
+.vs/
+*.user
+*.suo
+*.cache
+*.lock.json
+Thumbs.db
+desktop.ini
+Setup/app.ico
+Setup/payload.gz
+Setup/*.exe

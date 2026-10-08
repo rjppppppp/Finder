@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon>finder.ico</ApplicationIcon>
+    <Company>TN Dev Lab</Company>
+    <Authors>TN Dev Lab</Authors>
+    <Product>Finder</Product>
+    <Description>Finder - Ultra-Fast System Search by TN Dev Lab</Description>
+    <Copyright>Copyright © 2026 TN Dev Lab</Copyright>
+    <ServerGarbageCollection>false</ServerGarbageCollection>
+    <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+    <TieredCompilation>true</TieredCompilation>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Setup\**" />
+    <Page Remove="Setup\**" />
+    <None Remove="Setup\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="finder.png" />
+  </ItemGroup>
+</Project>
