@@ -97,6 +97,12 @@ Developed under a strict **< 50 MB RAM budget**, Finder stays quiet in your syst
   - Slide horizontally via **mouse drag / swipe**, **mouse scroll wheel**, touchpad gestures, or navigation chevrons.
   - High-contrast crisp white category icons on dark backgrounds for optimal readability.
 
+- **📅 Advanced Date & Target Range Filtering (`Ctrl + D`):**
+  - Instant presets: `✨ All Time`, `⚡ Today`, `🕒 Past 7 Days`, `📆 Past 30 Days`, `🗓️ This Year`.
+  - **Custom Target Date Range:** Select exact `From` and `To` dates to inspect files modified within a specific timeframe.
+  - Works standalone (browse all files modified today without keywords) or combined with queries (e.g. `report` in past 7 days).
+  - Compact formatted date display directly in the search results table.
+
 - **📋 One-Click Copy Path & Actions:**
   - Quick copy button (`📋`) in results list.
   - `Ctrl + C` shortcut to immediately copy the full path with animated toast notification.
@@ -109,6 +115,7 @@ Developed under a strict **< 50 MB RAM budget**, Finder stays quiet in your syst
 - **🛡️ Ultra-Low Memory Footprint (< 50 MB RAM):**
   - Non-LOH 64 KB chunked record allocation (`ChunkedRecordList`).
   - Zero-allocation string deduplication pool (`StringPool`).
+  - Zero-allocation Unix epoch date packing into struct alignment padding.
   - Active working set trimming via native Win32 `psapi.dll`.
 
 - **🧭 System Tray & Background Execution:**
@@ -122,6 +129,7 @@ Developed under a strict **< 50 MB RAM budget**, Finder stays quiet in your syst
 | Shortcut | Action |
 | :--- | :--- |
 | **`Alt + Space`** *(or `Ctrl + Space`)* | Toggle Finder window (Show / Hide) |
+| **`Ctrl + D`** | Toggle Date Filter drawer (Presets & Custom Date Range) |
 | **`↵ Enter`** | Launch the selected file or application |
 | **`Ctrl + ↵ Enter`** / **`Alt + ↵ Enter`** | Open containing folder in Windows Explorer with file selected |
 | **`Ctrl + C`** | Copy full file path to clipboard (with toast feedback) |

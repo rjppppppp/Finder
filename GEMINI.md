@@ -84,6 +84,12 @@ before building or publishing.
 - Files or folders created, deleted, or renamed anywhere on the PC are automatically captured and synchronized with the in-memory chunked records in real-time.
 - Tombstones (`record.Name == null`) are used for zero-allocation deletions, and active search views refresh automatically. Manual re-indexing is never required for normal file changes.
 
+### ⚠️ RULE 9: Date Filtering & Zero-RAM ModifiedTime Packing
+- `FileRecord.ModifiedTime` stores Unix epoch seconds (uint = 4 bytes). It packs directly into the 4-byte padding alignment hole between `DirIndex` (4 bytes) and `Name` pointer (8 bytes on 64-bit), consuming **0 bytes** extra RAM.
+- `FastDirectoryScanner.cs` converts Win32 `ftLastWriteTime` directly to Unix timestamp seconds via zero-allocation integer math.
+- Date filtering can be performed using presets (`All Time`, `Today`, `Past 7 Days`, `Past 30 Days`, `This Year`) or custom target date ranges (`From` to `To`).
+- Toggle Date Filter panel via `Ctrl + D` or `📅 Date` button in the search bar header.
+
 ---
 
 ## 4. Useful Development Commands

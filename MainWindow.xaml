@@ -92,6 +92,90 @@
                 </Setter.Value>
             </Setter>
         </Style>
+
+        <!-- Date Filter Pill Button Style -->
+        <Style x:Key="DatePillStyle" TargetType="Button">
+            <Setter Property="Margin" Value="0,0,6,0"/>
+            <Setter Property="Padding" Value="9,4"/>
+            <Setter Property="Background" Value="#1A1F2C"/>
+            <Setter Property="BorderBrush" Value="#293246"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="pillBorder"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="6"
+                                Padding="{TemplateBinding Padding}">
+                            <TextBlock x:Name="pillText"
+                                       Text="{TemplateBinding Content}"
+                                       FontSize="{TemplateBinding FontSize}"
+                                       FontWeight="{TemplateBinding FontWeight}"
+                                       Foreground="{TemplateBinding Foreground}"
+                                       VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="pillBorder" Property="Background" Value="#252D42"/>
+                                <Setter TargetName="pillBorder" Property="BorderBrush" Value="#38BDF8"/>
+                                <Setter TargetName="pillText" Property="Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Dark Theme DatePicker -->
+        <Style TargetType="{x:Type DatePicker}">
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="Background" Value="#171B28"/>
+            <Setter Property="BorderBrush" Value="#2E374D"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="{x:Type DatePickerTextBox}">
+            <Setter Property="Background" Value="#171B28"/>
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="CaretBrush" Value="#38BDF8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <!-- Date Filter Button Style -->
+        <Style x:Key="DateFilterBtnStyle" TargetType="Button">
+            <Setter Property="Background" Value="#181D2A"/>
+            <Setter Property="BorderBrush" Value="#29334A"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="Padding" Value="8,2"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="b"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="7"
+                                Padding="{TemplateBinding Padding}">
+                            <ContentPresenter VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="b" Property="Background" Value="#242D40"/>
+                                <Setter TargetName="b" Property="BorderBrush" Value="#38BDF8"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <!-- Main Outer Container with Rounded Corners, Draggable Anywhere -->
@@ -103,10 +187,11 @@
 
         <Grid>
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/> <!-- Search Box -->
-                <RowDefinition Height="Auto"/> <!-- Category Filter Bar -->
-                <RowDefinition Height="*"/>    <!-- Results List -->
-                <RowDefinition Height="Auto"/> <!-- Status & Shortcuts Footer -->
+                <RowDefinition Height="Auto"/> <!-- 0. Search Box -->
+                <RowDefinition Height="Auto"/> <!-- 1. Date Filter Panel -->
+                <RowDefinition Height="Auto"/> <!-- 2. Category Filter Bar -->
+                <RowDefinition Height="*"/>    <!-- 3. Results List -->
+                <RowDefinition Height="Auto"/> <!-- 4. Status & Shortcuts Footer -->
             </Grid.RowDefinitions>
 
             <!-- 1. Search Box Area (Draggable) -->
@@ -119,6 +204,7 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/> <!-- Search Icon -->
                         <ColumnDefinition Width="*"/>    <!-- Input -->
+                        <ColumnDefinition Width="Auto"/> <!-- Date Filter Button -->
                         <ColumnDefinition Width="Auto"/> <!-- Clear Button -->
                         <ColumnDefinition Width="Auto"/> <!-- Shortcut Badge -->
                         <ColumnDefinition Width="Auto"/> <!-- Close Button -->
@@ -153,12 +239,28 @@
                                  TextChanged="SearchBox_TextChanged"/>
                     </Grid>
 
+                    <!-- Date Filter Toggle Button -->
+                    <Button x:Name="DateFilterButton"
+                            Style="{StaticResource DateFilterBtnStyle}"
+                            Grid.Column="2"
+                            Height="26"
+                            Margin="6,0,2,0"
+                            Cursor="Hand"
+                            ToolTip="Filter by Date (Ctrl+D)"
+                            Click="DateFilterButton_Click">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="📅" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="DateFilterButtonText" Text="Date" FontSize="11" FontWeight="SemiBold" Foreground="#94A3B8" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="DateFilterChevron" Text="▾" FontSize="9" Margin="4,0,0,0" Foreground="#64748B" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+
                     <!-- Clear Button -->
                     <Button x:Name="ClearButton"
-                            Grid.Column="2"
+                            Grid.Column="3"
                             Width="24"
                             Height="24"
-                            Margin="8,0"
+                            Margin="6,0"
                             Background="#272D3D"
                             Foreground="#94A3B8"
                             BorderThickness="0"
@@ -175,7 +277,7 @@
                     </Button>
 
                     <!-- Shortcut Pill -->
-                    <Border Grid.Column="3"
+                    <Border Grid.Column="4"
                             Background="#1E2333"
                             BorderBrush="#2F364C"
                             BorderThickness="1"
@@ -191,7 +293,7 @@
 
                     <!-- Window Close Button -->
                     <Button x:Name="WindowCloseButton"
-                            Grid.Column="4"
+                            Grid.Column="5"
                             Width="26"
                             Height="26"
                             Margin="8,0,0,0"
@@ -212,9 +314,89 @@
                 </Grid>
             </Border>
 
-            <!-- 2. Category Filter Bar (Slidable via drag, wheel, or arrow buttons) -->
-            <Border x:Name="CategoryBar"
+            <!-- 2. Date Filter Drawer / Panel (Toggleable: Presets + Custom Date Range) -->
+            <Border x:Name="DateFilterPanel"
                     Grid.Row="1"
+                    Visibility="Collapsed"
+                    Background="#131622"
+                    BorderThickness="0,0,0,1"
+                    BorderBrush="#212534"
+                    Padding="14,8">
+                <StackPanel>
+                    <!-- Quick Presets Row -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <TextBlock Text="Date:" Foreground="#64748B" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0"/>
+
+                        <Button x:Name="DatePreset_All" Tag="All" Content="✨ All Time" Click="DatePreset_Click" Style="{StaticResource DatePillStyle}"/>
+                        <Button x:Name="DatePreset_Today" Tag="Today" Content="⚡ Today" Click="DatePreset_Click" Style="{StaticResource DatePillStyle}"/>
+                        <Button x:Name="DatePreset_7Days" Tag="7Days" Content="🕒 Past 7 Days" Click="DatePreset_Click" Style="{StaticResource DatePillStyle}"/>
+                        <Button x:Name="DatePreset_30Days" Tag="30Days" Content="📆 Past 30 Days" Click="DatePreset_Click" Style="{StaticResource DatePillStyle}"/>
+                        <Button x:Name="DatePreset_ThisYear" Tag="ThisYear" Content="🗓️ This Year" Click="DatePreset_Click" Style="{StaticResource DatePillStyle}"/>
+                        <Button x:Name="DatePreset_Custom" Tag="Custom" Content="🎯 Custom Range..." Click="DatePreset_Click" Style="{StaticResource DatePillStyle}"/>
+
+                        <Button x:Name="ClearDateFilterButton"
+                                Content="✕ Reset"
+                                Margin="8,0,0,0"
+                                Padding="6,2"
+                                Background="Transparent"
+                                Foreground="#F43F5E"
+                                FontSize="10.5"
+                                FontWeight="SemiBold"
+                                BorderThickness="0"
+                                Cursor="Hand"
+                                Visibility="Collapsed"
+                                Click="ClearDateFilter_Click"/>
+                    </StackPanel>
+
+                    <!-- Custom Date Range Picker Bar -->
+                    <Border x:Name="CustomDateRangeBar"
+                            Visibility="Collapsed"
+                            Margin="0,8,0,0"
+                            Padding="10,6"
+                            Background="#181D2C"
+                            BorderBrush="#27324B"
+                            BorderThickness="1"
+                            CornerRadius="8">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="Target Range:" Foreground="#94A3B8" FontSize="11" FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,10,0"/>
+
+                            <TextBlock Text="From:" Foreground="#64748B" FontSize="11" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <DatePicker x:Name="FromDatePicker" Width="125" Height="25" SelectedDateChanged="CustomDatePicker_SelectedDateChanged"/>
+
+                            <TextBlock Text="To:" Foreground="#64748B" FontSize="11" VerticalAlignment="Center" Margin="10,0,4,0"/>
+                            <DatePicker x:Name="ToDatePicker" Width="125" Height="25" SelectedDateChanged="CustomDatePicker_SelectedDateChanged"/>
+
+                            <Button Content="✓ Apply"
+                                    Margin="10,0,0,0"
+                                    Padding="10,3"
+                                    Background="#0284C7"
+                                    Foreground="#FFFFFF"
+                                    FontSize="11"
+                                    FontWeight="SemiBold"
+                                    BorderThickness="0"
+                                    Cursor="Hand"
+                                    Click="ApplyCustomDate_Click">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border x:Name="applyBorder" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}">
+                                            <TextBlock Text="{TemplateBinding Content}" Foreground="{TemplateBinding Foreground}" FontSize="{TemplateBinding FontSize}" FontWeight="{TemplateBinding FontWeight}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="applyBorder" Property="Background" Value="#0369A1"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <!-- 3. Category Filter Bar (Slidable via drag, wheel, or arrow buttons) -->
+            <Border x:Name="CategoryBar"
+                    Grid.Row="2"
                     Padding="10,6"
                     Background="#12141C"
                     BorderThickness="0,0,0,1"
@@ -329,9 +511,9 @@
                 </Grid>
             </Border>
 
-            <!-- 3. Results List -->
+            <!-- 4. Results List -->
             <ListBox x:Name="ResultsList"
-                     Grid.Row="2"
+                     Grid.Row="3"
                      MaxHeight="380"
                      Background="Transparent"
                      BorderThickness="0"
@@ -388,11 +570,13 @@
                                     <!-- Match Tag (Typo / Acronym - collapses to 0 width for exact matches) -->
                                     <ColumnDefinition Width="Auto"/>
                                     <!-- Category Pill (Fixed width for 100% vertical symmetry) -->
-                                    <ColumnDefinition Width="84"/>
+                                    <ColumnDefinition Width="80"/>
+                                    <!-- Modified Date (Clean right-aligned) -->
+                                    <ColumnDefinition Width="68"/>
                                     <!-- File Size (Fixed width, strictly right-aligned) -->
-                                    <ColumnDefinition Width="58"/>
+                                    <ColumnDefinition Width="54"/>
                                     <!-- Copy Path Action Button (Fixed position) -->
-                                    <ColumnDefinition Width="32"/>
+                                    <ColumnDefinition Width="30"/>
                                 </Grid.ColumnDefinitions>
 
                                 <!-- 1. Subtle Match Type Tag (~ Typo / ⚡ Acronym) -->
@@ -414,7 +598,7 @@
 
                                 <!-- 2. Uniform Category Badge -->
                                 <Border Grid.Column="1"
-                                        Width="80"
+                                        Width="76"
                                         Height="24"
                                         HorizontalAlignment="Center"
                                         Background="#181F2E"
@@ -438,8 +622,18 @@
                                     </StackPanel>
                                 </Border>
 
-                                <!-- 3. Clean Right-Aligned File Size -->
+                                <!-- 3. Clean Right-Aligned Modified Date -->
                                 <TextBlock Grid.Column="2"
+                                           Text="{Binding DateText}"
+                                           Foreground="#64748B"
+                                           FontSize="10.5"
+                                           VerticalAlignment="Center"
+                                           HorizontalAlignment="Right"
+                                           TextAlignment="Right"
+                                           Margin="0,0,6,0"/>
+
+                                <!-- 4. Clean Right-Aligned File Size -->
+                                <TextBlock Grid.Column="3"
                                            Text="{Binding SizeText}"
                                            Foreground="#94A3B8"
                                            FontSize="11"
@@ -448,8 +642,8 @@
                                            TextAlignment="Right"
                                            Margin="0,0,6,0"/>
 
-                                <!-- 4. Sleek Copy Path Button -->
-                                <Button Grid.Column="3"
+                                <!-- 5. Sleek Copy Path Button -->
+                                <Button Grid.Column="4"
                                         Width="26"
                                         Height="24"
                                         HorizontalAlignment="Center"
@@ -481,8 +675,8 @@
                 </ListBox.ItemTemplate>
             </ListBox>
 
-            <!-- 4. Status and Shortcuts Footer (Draggable) -->
-            <Border Grid.Row="3"
+            <!-- 5. Status and Shortcuts Footer (Draggable) -->
+            <Border Grid.Row="4"
                     Padding="16,8"
                     Background="#11131A"
                     BorderThickness="0,1,0,0"
@@ -571,7 +765,8 @@
                     </StackPanel>
 
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                        <TextBlock Text="Ctrl+C Copy Path" Foreground="#38BDF8" FontSize="11" Margin="0,0,10,0"/>
+                        <TextBlock Text="Ctrl+D Date" Foreground="#38BDF8" FontSize="11" Margin="0,0,10,0"/>
+                        <TextBlock Text="Ctrl+C Copy" Foreground="#64748B" FontSize="11" Margin="0,0,10,0"/>
                         <TextBlock Text="Ctrl+R Reindex" Foreground="#64748B" FontSize="11" Margin="0,0,10,0"/>
                         <TextBlock Text="↵ Open" Foreground="#CBD5E1" FontSize="11" Margin="0,0,10,0"/>
                         <TextBlock Text="Ctrl+↵ Folder" Foreground="#94A3B8" FontSize="11" Margin="0,0,10,0"/>

@@ -53,7 +53,7 @@ public class ChunkedRecordList
                     ref var record = ref chunk[i];
                     if (record.DirIndex == dirIndex && string.Equals(record.Name, name, StringComparison.OrdinalIgnoreCase))
                     {
-                        chunk[i] = new FileRecord(dirIndex, null!, record.IsDirectory);
+                        chunk[i] = new FileRecord(dirIndex, null!, record.IsDirectory, record.ModifiedTime);
                         if (_count > 0) _count--;
                         return true;
                     }
@@ -77,7 +77,7 @@ public class ChunkedRecordList
                     ref var record = ref chunk[i];
                     if (record.DirIndex == dirIndex && !string.IsNullOrEmpty(record.Name))
                     {
-                        chunk[i] = new FileRecord(dirIndex, null!, record.IsDirectory);
+                        chunk[i] = new FileRecord(dirIndex, null!, record.IsDirectory, record.ModifiedTime);
                         if (_count > 0) _count--;
                     }
                 }

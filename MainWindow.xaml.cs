@@ -20,6 +20,12 @@ public partial class MainWindow : Window
     private string _currentQuery = "";
     private string _selectedCategory = "All";
 
+    // Date Filter State
+    private string _selectedDatePreset = "All";
+    private uint? _filterMinDate = null;
+    private uint? _filterMaxDate = null;
+    private bool _isDateFilterPanelOpen = false;
+
     // Infinite scrolling / pagination with ultra-lightweight candidate structs
     private List<SearchCandidate> _allCandidates = new();
     private readonly ObservableCollection<SearchResultItem> _displayedItems = new();
@@ -254,6 +260,201 @@ public partial class MainWindow : Window
         }
     }
 
+    #region Date Filter Handlers
+
+    private void DateFilterButton_Click(object sender, RoutedEventArgs e)
+    {
+        ToggleDateFilterPanel();
+    }
+
+    private void ToggleDateFilterPanel()
+    {
+        _isDateFilterPanelOpen = !_isDateFilterPanelOpen;
+        DateFilterPanel.Visibility = _isDateFilterPanelOpen ? Visibility.Visible : Visibility.Collapsed;
+        DateFilterChevron.Text = _isDateFilterPanelOpen ? "▴" : "▾";
+    }
+
+    private void DatePreset_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button btn && btn.Tag is string preset)
+        {
+            SetDatePreset(preset);
+        }
+    }
+
+    private void SetDatePreset(string preset)
+    {
+        _selectedDatePreset = preset;
+
+        switch (preset)
+        {
+            case "All":
+                _filterMinDate = null;
+                _filterMaxDate = null;
+                CustomDateRangeBar.Visibility = Visibility.Collapsed;
+                break;
+
+            case "Today":
+                DateTime todayStart = DateTime.Today;
+                DateTime todayEnd = todayStart.AddDays(1).AddTicks(-1);
+                _filterMinDate = (uint)((DateTimeOffset)todayStart).ToUnixTimeSeconds();
+                _filterMaxDate = (uint)((DateTimeOffset)todayEnd).ToUnixTimeSeconds();
+                CustomDateRangeBar.Visibility = Visibility.Collapsed;
+                break;
+
+            case "7Days":
+                DateTime past7 = DateTime.Today.AddDays(-7);
+                _filterMinDate = (uint)((DateTimeOffset)past7).ToUnixTimeSeconds();
+                _filterMaxDate = (uint)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                CustomDateRangeBar.Visibility = Visibility.Collapsed;
+                break;
+
+            case "30Days":
+                DateTime past30 = DateTime.Today.AddDays(-30);
+                _filterMinDate = (uint)((DateTimeOffset)past30).ToUnixTimeSeconds();
+                _filterMaxDate = (uint)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                CustomDateRangeBar.Visibility = Visibility.Collapsed;
+                break;
+
+            case "ThisYear":
+                DateTime thisYearStart = new DateTime(DateTime.Today.Year, 1, 1);
+                _filterMinDate = (uint)((DateTimeOffset)thisYearStart).ToUnixTimeSeconds();
+                _filterMaxDate = (uint)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                CustomDateRangeBar.Visibility = Visibility.Collapsed;
+                break;
+
+            case "Custom":
+                CustomDateRangeBar.Visibility = Visibility.Visible;
+                if (FromDatePicker.SelectedDate == null)
+                {
+                    FromDatePicker.SelectedDate = DateTime.Today.AddDays(-7);
+                }
+                if (ToDatePicker.SelectedDate == null)
+                {
+                    ToDatePicker.SelectedDate = DateTime.Today;
+                }
+                ApplyCustomDateRange();
+                return;
+        }
+
+        UpdateDateFilterUI();
+        PerformSearch(_currentQuery);
+    }
+
+    private void CustomDatePicker_SelectedDateChanged(object sender, SelectionChangedEventArgs e)
+    {
+        // Smoothly handled on Apply click
+    }
+
+    private void ApplyCustomDate_Click(object sender, RoutedEventArgs e)
+    {
+        _selectedDatePreset = "Custom";
+        ApplyCustomDateRange();
+    }
+
+    private void ApplyCustomDateRange()
+    {
+        uint? min = null;
+        uint? max = null;
+
+        if (FromDatePicker.SelectedDate.HasValue)
+        {
+            DateTime fromDate = FromDatePicker.SelectedDate.Value.Date;
+            min = (uint)((DateTimeOffset)fromDate).ToUnixTimeSeconds();
+        }
+
+        if (ToDatePicker.SelectedDate.HasValue)
+        {
+            DateTime toDate = ToDatePicker.SelectedDate.Value.Date.AddDays(1).AddTicks(-1);
+            max = (uint)((DateTimeOffset)toDate).ToUnixTimeSeconds();
+        }
+
+        _filterMinDate = min;
+        _filterMaxDate = max;
+
+        UpdateDateFilterUI();
+        PerformSearch(_currentQuery);
+    }
+
+    private void ClearDateFilter_Click(object sender, RoutedEventArgs e)
+    {
+        SetDatePreset("All");
+    }
+
+    private void UpdateDateFilterUI()
+    {
+        HighlightPresetButton(DatePreset_All, _selectedDatePreset == "All");
+        HighlightPresetButton(DatePreset_Today, _selectedDatePreset == "Today");
+        HighlightPresetButton(DatePreset_7Days, _selectedDatePreset == "7Days");
+        HighlightPresetButton(DatePreset_30Days, _selectedDatePreset == "30Days");
+        HighlightPresetButton(DatePreset_ThisYear, _selectedDatePreset == "ThisYear");
+        HighlightPresetButton(DatePreset_Custom, _selectedDatePreset == "Custom");
+
+        bool hasFilter = _selectedDatePreset != "All" && (_filterMinDate.HasValue || _filterMaxDate.HasValue);
+        ClearDateFilterButton.Visibility = hasFilter ? Visibility.Visible : Visibility.Collapsed;
+
+        if (!hasFilter)
+        {
+            DateFilterButtonText.Text = "Date";
+            DateFilterButtonText.Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184));
+            DateFilterButton.Background = new SolidColorBrush(Color.FromRgb(24, 29, 42));
+            DateFilterButton.BorderBrush = new SolidColorBrush(Color.FromRgb(41, 51, 74));
+        }
+        else
+        {
+            string label = _selectedDatePreset switch
+            {
+                "Today" => "Today",
+                "7Days" => "7 Days",
+                "30Days" => "30 Days",
+                "ThisYear" => "This Year",
+                "Custom" => GetCustomDateLabel(),
+                _ => "Date"
+            };
+
+            DateFilterButtonText.Text = label;
+            DateFilterButtonText.Foreground = new SolidColorBrush(Color.FromRgb(56, 189, 248));
+            DateFilterButton.Background = new SolidColorBrush(Color.FromRgb(30, 43, 68));
+            DateFilterButton.BorderBrush = new SolidColorBrush(Color.FromRgb(56, 189, 248));
+        }
+    }
+
+    private string GetCustomDateLabel()
+    {
+        if (FromDatePicker.SelectedDate.HasValue && ToDatePicker.SelectedDate.HasValue)
+        {
+            return $"{FromDatePicker.SelectedDate.Value:MMM d} - {ToDatePicker.SelectedDate.Value:MMM d}";
+        }
+        else if (FromDatePicker.SelectedDate.HasValue)
+        {
+            return $"From {FromDatePicker.SelectedDate.Value:MMM d}";
+        }
+        else if (ToDatePicker.SelectedDate.HasValue)
+        {
+            return $"To {ToDatePicker.SelectedDate.Value:MMM d}";
+        }
+        return "Custom Range";
+    }
+
+    private static void HighlightPresetButton(Button? btn, bool isSelected)
+    {
+        if (btn == null) return;
+        if (isSelected)
+        {
+            btn.Background = new SolidColorBrush(Color.FromRgb(2, 132, 199)); // #0284C7
+            btn.BorderBrush = new SolidColorBrush(Color.FromRgb(56, 189, 248)); // #38BDF8
+            btn.Foreground = Brushes.White;
+        }
+        else
+        {
+            btn.Background = new SolidColorBrush(Color.FromRgb(26, 31, 44)); // #1A1F2C
+            btn.BorderBrush = new SolidColorBrush(Color.FromRgb(41, 50, 70)); // #293246
+            btn.Foreground = new SolidColorBrush(Color.FromRgb(148, 163, 184)); // #94A3B8
+        }
+    }
+
+    #endregion
+
     #region Category Bar Sliding & Drag Handlers
 
     private void CategoryScrollViewer_PreviewMouseDown(object sender, MouseButtonEventArgs e)
@@ -331,7 +532,8 @@ public partial class MainWindow : Window
     {
         int seq = Interlocked.Increment(ref _searchSequenceId);
 
-        if (string.IsNullOrWhiteSpace(query))
+        bool hasDateFilter = _filterMinDate.HasValue || _filterMaxDate.HasValue;
+        if (string.IsNullOrWhiteSpace(query) && !hasDateFilter)
         {
             _allCandidates.Clear();
             _displayedItems.Clear();
@@ -341,10 +543,12 @@ public partial class MainWindow : Window
         }
 
         string activeCategory = _selectedCategory;
+        uint? minDate = _filterMinDate;
+        uint? maxDate = _filterMaxDate;
 
         Task.Run(() =>
         {
-            return _indexService.Search(query, activeCategory);
+            return _indexService.Search(query, activeCategory, minDate, maxDate);
         }).ContinueWith(t =>
         {
             if (t.IsCompletedSuccessfully && _searchSequenceId == seq)
@@ -364,7 +568,7 @@ public partial class MainWindow : Window
                     _displayedItems.Clear();
                     _loadedCount = 0;
 
-                    // Load initial page (40 items)
+                    // Load initial page (50 items)
                     LoadNextBatch(seq);
 
                     if (_displayedItems.Count > 0)
@@ -405,12 +609,37 @@ public partial class MainWindow : Window
                 string fullPath = Path.Combine(dir, c.Name);
                 var highlights = FuzzySearchEngine.GetHighlightIndices(c.Name, query, c.MatchType);
 
+                string dateStr = "";
+                if (c.ModifiedTime > 0)
+                {
+                    try
+                    {
+                        var dt = DateTimeOffset.FromUnixTimeSeconds(c.ModifiedTime).LocalDateTime;
+                        var today = DateTime.Today;
+                        if (dt.Date == today)
+                        {
+                            dateStr = dt.ToString("h:mm tt");
+                        }
+                        else if (dt.Year == today.Year)
+                        {
+                            dateStr = dt.ToString("MMM d");
+                        }
+                        else
+                        {
+                            dateStr = dt.ToString("yyyy-MM-dd");
+                        }
+                    }
+                    catch { }
+                }
+
                 var item = new SearchResultItem
                 {
                     Name = c.Name,
                     FullPath = fullPath,
                     DirectoryPath = dir,
                     IsDirectory = c.IsDirectory,
+                    DateText = dateStr,
+                    ModifiedTime = c.ModifiedTime,
                     HighlightIndices = highlights,
                     Score = c.Score,
                     MatchType = c.MatchType,
@@ -545,6 +774,13 @@ public partial class MainWindow : Window
             (Keyboard.Modifiers == ModifierKeys.Alt && e.Key == Key.F4))
         {
             ExitApplication();
+            e.Handled = true;
+            return;
+        }
+
+        if (Keyboard.Modifiers == ModifierKeys.Control && e.Key == Key.D)
+        {
+            ToggleDateFilterPanel();
             e.Handled = true;
             return;
         }

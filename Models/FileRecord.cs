@@ -2,18 +2,21 @@ namespace FinderApp.Models;
 
 /// <summary>
 /// Ultra-lean in-memory representation.
-/// No file size or timestamps stored here to save maximum RAM.
-/// Size is resolved on-demand only for the top 30 visible results.
+/// ModifiedTime stores Unix epoch seconds (uint = 4 bytes).
+/// Placed right between DirIndex (4 bytes) and Name pointer (8 bytes on 64-bit),
+/// it occupies the 4-byte padding hole with ZERO extra memory footprint.
 /// </summary>
 public readonly struct FileRecord
 {
     public int DirIndex { get; }
+    public uint ModifiedTime { get; }
     public string Name { get; }
     public bool IsDirectory { get; }
 
-    public FileRecord(int dirIndex, string name, bool isDirectory)
+    public FileRecord(int dirIndex, string name, bool isDirectory, uint modifiedTime = 0)
     {
         DirIndex = dirIndex;
+        ModifiedTime = modifiedTime;
         Name = name;
         IsDirectory = isDirectory;
     }

@@ -10,6 +10,8 @@ public class SearchResultItem
     public required string DirectoryPath { get; init; }
     public bool IsDirectory { get; init; }
     public string SizeText { get; set; } = "";
+    public string DateText { get; set; } = "";
+    public uint ModifiedTime { get; set; } = 0;
     public List<int> HighlightIndices { get; init; } = new();
     public int Score { get; init; }
     public string MatchType { get; init; } = "";

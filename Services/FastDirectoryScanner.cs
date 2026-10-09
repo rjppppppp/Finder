@@ -48,7 +48,7 @@ public static class FastDirectoryScanner
 
     private static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
 
-    public delegate void EntryFoundCallback(string name, bool isDirectory);
+    public delegate void EntryFoundCallback(string name, bool isDirectory, uint modifiedTime);
 
     /// <summary>
     /// Scans a directory using low-level Win32 API.
@@ -96,8 +96,17 @@ public static class FastDirectoryScanner
                 if (isDir && isReparsePoint)
                     continue;
 
+                // Extract Win32 ftLastWriteTime and convert to Unix Epoch seconds (zero-allocation)
+                long fileTime = ((long)findData.ftLastWriteTime.dwHighDateTime << 32) | (uint)findData.ftLastWriteTime.dwLowDateTime;
+                uint modifiedTime = 0;
+                if (fileTime > 116444736000000000L)
+                {
+                    long s = (fileTime - 116444736000000000L) / 10000000L;
+                    modifiedTime = s > uint.MaxValue ? uint.MaxValue : (uint)Math.Max(0L, s);
+                }
+
                 string pooledName = StringPool.Intern(name);
-                callback(pooledName, isDir);
+                callback(pooledName, isDir, modifiedTime);
 
             } while (FindNextFileW(hFind, out findData));
         }

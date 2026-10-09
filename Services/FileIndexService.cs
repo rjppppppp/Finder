@@ -243,7 +243,7 @@ public class FileIndexService
 
             try
             {
-                FastDirectoryScanner.ScanDirectory(currentDir, (name, isDir) =>
+                FastDirectoryScanner.ScanDirectory(currentDir, (name, isDir, modifiedTime) =>
                 {
                     if (isDir)
                     {
@@ -251,12 +251,12 @@ public class FileIndexService
                         {
                             string subDirPath = Path.Combine(currentDir, name);
                             stack.Push((subDirPath, depth + 1));
-                            _files.Add(new FileRecord(dirIndex, name, true));
+                            _files.Add(new FileRecord(dirIndex, name, true, modifiedTime));
                         }
                     }
                     else
                     {
-                        _files.Add(new FileRecord(dirIndex, name, false));
+                        _files.Add(new FileRecord(dirIndex, name, false, modifiedTime));
                         batchCounter++;
                         if (batchCounter % 15000 == 0)
                         {
@@ -368,8 +368,16 @@ public class FileIndexService
 
             bool isDir = Directory.Exists(e.FullPath);
             int dirIndex = GetOrAddDirectoryIndex(dir);
+            uint modifiedTime = 0;
+            try
+            {
+                var dt = isDir ? Directory.GetLastWriteTimeUtc(e.FullPath) : File.GetLastWriteTimeUtc(e.FullPath);
+                long unixSec = ((DateTimeOffset)dt).ToUnixTimeSeconds();
+                if (unixSec > 0) modifiedTime = (uint)Math.Min(unixSec, uint.MaxValue);
+            }
+            catch { }
 
-            _files.Add(new FileRecord(dirIndex, name, isDir));
+            _files.Add(new FileRecord(dirIndex, name, isDir, modifiedTime));
 
             if (isDir)
             {
@@ -429,7 +437,16 @@ public class FileIndexService
             {
                 bool isDir = Directory.Exists(e.FullPath);
                 int newDirIndex = GetOrAddDirectoryIndex(newDir);
-                _files.Add(new FileRecord(newDirIndex, newName, isDir));
+                uint modifiedTime = 0;
+                try
+                {
+                    var dt = isDir ? Directory.GetLastWriteTimeUtc(e.FullPath) : File.GetLastWriteTimeUtc(e.FullPath);
+                    long unixSec = ((DateTimeOffset)dt).ToUnixTimeSeconds();
+                    if (unixSec > 0) modifiedTime = (uint)Math.Min(unixSec, uint.MaxValue);
+                }
+                catch { }
+
+                _files.Add(new FileRecord(newDirIndex, newName, isDir, modifiedTime));
 
                 if (isDir)
                 {
@@ -455,7 +472,7 @@ public class FileIndexService
 
                 int dirIndex = GetOrAddDirectoryIndex(currentDir);
 
-                FastDirectoryScanner.ScanDirectory(currentDir, (name, isDir) =>
+                FastDirectoryScanner.ScanDirectory(currentDir, (name, isDir, modifiedTime) =>
                 {
                     if (isDir)
                     {
@@ -463,12 +480,12 @@ public class FileIndexService
                         {
                             string sub = Path.Combine(currentDir, name);
                             stack.Push((sub, depth + 1));
-                            _files.Add(new FileRecord(dirIndex, name, true));
+                            _files.Add(new FileRecord(dirIndex, name, true, modifiedTime));
                         }
                     }
                     else
                     {
-                        _files.Add(new FileRecord(dirIndex, name, false));
+                        _files.Add(new FileRecord(dirIndex, name, false, modifiedTime));
                     }
                 });
             }
@@ -492,9 +509,10 @@ public class FileIndexService
 
     #endregion
 
-    public SearchResponse Search(string query, string selectedCategory = "All")
+    public SearchResponse Search(string query, string selectedCategory = "All", uint? minDate = null, uint? maxDate = null)
     {
-        if (string.IsNullOrWhiteSpace(query))
+        bool hasDateFilter = minDate.HasValue || maxDate.HasValue;
+        if (string.IsNullOrWhiteSpace(query) && !hasDateFilter)
         {
             return new SearchResponse();
         }
@@ -508,6 +526,7 @@ public class FileIndexService
         var globalCandidates = new List<SearchCandidate>();
         var categoryCounts = new ConcurrentDictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         var combineLock = new object();
+        bool hasQuery = !string.IsNullOrWhiteSpace(query);
 
         // Parallel scan across chunks with thread-local buffers
         Parallel.For(
@@ -521,9 +540,36 @@ public class FileIndexService
                 {
                     ref readonly var record = ref chunk[i];
                     if (string.IsNullOrEmpty(record.Name)) continue; // Skip tombstones/deleted files
-                    var match = FuzzySearchEngine.QuickMatch(record.Name, query);
 
-                    if (match.IsMatch)
+                    // Fast Date Bounds check (Zero-allocation)
+                    if (minDate.HasValue && (record.ModifiedTime == 0 || record.ModifiedTime < minDate.Value))
+                        continue;
+                    if (maxDate.HasValue && (record.ModifiedTime == 0 || record.ModifiedTime > maxDate.Value))
+                        continue;
+
+                    bool isMatch = false;
+                    int score = 0;
+                    string matchType = "";
+
+                    if (hasQuery)
+                    {
+                        var match = FuzzySearchEngine.QuickMatch(record.Name, query);
+                        if (match.IsMatch)
+                        {
+                            isMatch = true;
+                            score = match.Score;
+                            matchType = match.MatchType;
+                        }
+                    }
+                    else
+                    {
+                        isMatch = true;
+                        // Score by most recently modified
+                        score = (int)Math.Min(record.ModifiedTime, int.MaxValue / 2);
+                        matchType = "Date Match";
+                    }
+
+                    if (isMatch)
                     {
                         var (category, catIcon) = FileCategoryHelper.GetCategory(record.Name, record.IsDirectory);
 
@@ -534,10 +580,11 @@ public class FileIndexService
                         {
                             state.LocalList.Add(new SearchCandidate(
                                 record.DirIndex,
+                                record.ModifiedTime,
                                 record.Name,
                                 record.IsDirectory,
-                                match.Score,
-                                match.MatchType,
+                                score,
+                                matchType,
                                 category,
                                 catIcon
                             ));

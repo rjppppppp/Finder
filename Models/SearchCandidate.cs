@@ -8,6 +8,7 @@ namespace FinderApp.Models;
 public readonly struct SearchCandidate
 {
     public readonly int DirIndex;
+    public readonly uint ModifiedTime;
     public readonly string Name;
     public readonly bool IsDirectory;
     public readonly int Score;
@@ -17,6 +18,7 @@ public readonly struct SearchCandidate
 
     public SearchCandidate(
         int dirIndex,
+        uint modifiedTime,
         string name,
         bool isDirectory,
         int score,
@@ -25,6 +27,7 @@ public readonly struct SearchCandidate
         string categoryIcon)
     {
         DirIndex = dirIndex;
+        ModifiedTime = modifiedTime;
         Name = name;
         IsDirectory = isDirectory;
         Score = score;
