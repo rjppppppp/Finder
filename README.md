@@ -53,7 +53,7 @@ Developed under a strict **< 50 MB RAM budget**, Finder stays quiet in your syst
 
 ## 📊 Why Finder? (Benchmark & Comparison)
 
-| Feature | ⚡ **Finder** *(TN Dev Lab)* | Windows Search | PowerToys Run | Everything |
+| Feature | ⚡ **Finder** *(TN Dev Lab)* | Windows Search | PowerToys Run | Others |
 | :--- | :---: | :---: | :---: | :---: |
 | **Idle Memory (RAM)** | **~35 – 45 MB** | 250 MB – 500 MB | 150 MB – 300 MB | 70 MB – 120 MB |
 | **Search Response Time** | **Sub-millisecond (1–3 ms)** | 300 ms – 1500 ms (Laggy) | 50 ms – 150 ms | Sub-millisecond |
